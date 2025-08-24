@@ -38,6 +38,22 @@ jobs:
 
       - name: Deploy to gh-pages branch
         run: |
-          npx gh-pages -d docs -m "Deploy from GitHub Actions" -r "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          # Clone the repository to a temporary directory
+          git clone --depth 1 --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git /tmp/gh-pages || git clone --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git /tmp/gh-pages
+          
+          # If gh-pages branch doesn't exist, create it
+          cd /tmp/gh-pages
+          if [ ! -f index.html ]; then
+            git checkout --orphan gh-pages
+            git rm -rf . 2>/dev/null || true
+          fi
+          
+          # Copy docs content
+          cp -r ${{ github.workspace }}/docs/* .
+          
+          # Add, commit and push
+          git add .
+          git commit -m "Deploy from GitHub Actions - $(date)" || echo "No changes to commit"
+          git push origin gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
