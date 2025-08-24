@@ -7,7 +7,7 @@ on:
 
 # Sets permissions of the GITHUB_TOKEN
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,6 +38,6 @@ jobs:
 
       - name: Deploy to gh-pages branch
         run: |
-          npx gh-pages -d docs -m "Deploy from GitHub Actions"
+          npx gh-pages -d docs -m "Deploy from GitHub Actions" -r "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
