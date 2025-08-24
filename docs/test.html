@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LanBeam 测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-result {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 LanBeam 测试页面</h1>
+    
+    <div class="test-section">
+        <h2>浏览器兼容性测试</h2>
+        <button onclick="testBrowserSupport()">运行兼容性测试</button>
+        <div id="browser-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>WebRTC 连接测试</h2>
+        <button onclick="testWebRTCConnection()">测试 WebRTC</button>
+        <button onclick="testLocalNetwork()">获取本地网络信息</button>
+        <div id="webrtc-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>加密功能测试</h2>
+        <button onclick="testCrypto()">测试加密功能</button>
+        <div id="crypto-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>QR 码功能测试</h2>
+        <button onclick="testQRGeneration()">生成测试 QR 码</button>
+        <button onclick="testCameraAccess()">测试摄像头访问</button>
+        <div id="qr-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>文件处理测试</h2>
+        <input type="file" id="test-file" multiple>
+        <button onclick="testFileProcessing()">测试文件处理</button>
+        <div id="file-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>性能测试</h2>
+        <button onclick="testPerformance()">运行性能测试</button>
+        <div id="performance-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>调试日志</h2>
+        <button onclick="clearLog()">清空日志</button>
+        <div id="debug-log" class="log"></div>
+    </div>
+
+    <script type="module">
+        // 导入核心模块进行测试
+        import { LanBeamConnection, ConnectionUtils } from './core/connection.js';
+        import { FileTransferEngine, TransferUtils } from './core/transfer.js';
+        import { LanBeamCrypto, CryptoUtils } from './core/crypto.js';
+        import { QRManualAdapter, QRUtils } from './adapters/qr-manual.js';
+
+        let logElement = document.getElementById('debug-log');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[Test] ${message}`);
+        }
+
+        window.clearLog = () => {
+            logElement.textContent = '';
+        };
+
+        // 浏览器兼容性测试
+        window.testBrowserSupport = async () => {
+            log('开始浏览器兼容性测试...');
+            const resultsElement = document.getElementById('browser-results');
+            resultsElement.innerHTML = '';
+            
+            const tests = [
+                {
+                    name: 'WebRTC 支持',
+                    test: () => ConnectionUtils.isSupported(),
+                },
+                {
+                    name: 'Web Crypto API',
+                    test: () => CryptoUtils.isSupported(),
+                },
+                {
+                    name: 'File API',
+                    test: () => typeof File !== 'undefined' && typeof FileReader !== 'undefined',
+                },
+                {
+                    name: 'QR 码库',
+                    test: () => typeof QRCode !== 'undefined',
+                },
+                {
+                    name: 'QR 扫描器',
+                    test: () => typeof QrScanner !== 'undefined',
+                },
+                {
+                    name: '摄像头 API',
+                    test: () => navigator.mediaDevices && navigator.mediaDevices.getUserMedia,
+                },
+                {
+                    name: '剪贴板 API',
+                    test: () => navigator.clipboard,
+                },
+                {
+                    name: 'Service Worker',
+                    test: () => 'serviceWorker' in navigator,
+                },
+                {
+                    name: 'File System Access API',
+                    test: () => 'showSaveFilePicker' in window,
+                }
+            ];
+
+            for (const test of tests) {
+                try {
+                    const result = test.test();
+                    const className = result ? 'success' : 'warning';
+                    const status = result ? '✅ 支持' : '⚠️ 不支持';
+                    
+                    resultsElement.innerHTML += `
+                        <div class="test-result ${className}">
+                            <strong>${test.name}:</strong> ${status}
+                        </div>
+                    `;
+                    
+                    log(`${test.name}: ${result ? '支持' : '不支持'}`, result ? 'success' : 'warning');
+                } catch (error) {
+                    resultsElement.innerHTML += `
+                        <div class="test-result error">
+                            <strong>${test.name}:</strong> ❌ 错误 - ${error.message}
+                        </div>
+                    `;
+                    log(`${test.name} 测试出错: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // WebRTC 连接测试
+        window.testWebRTCConnection = async () => {
+            log('测试 WebRTC 连接...');
+            const resultsElement = document.getElementById('webrtc-results');
+            
+            try {
+                const connection = new LanBeamConnection({ debug: true });
+                
+                connection.addEventListener('stateChange', (e) => {
+                    log(`连接状态变化: ${e.detail.newState}`);
+                });
+
+                const offer = await connection.createOffer();
+                log(`成功创建 Offer (${offer.length} 字符)`, 'success');
+                
+                resultsElement.innerHTML = `
+                    <div class="test-result success">
+                        ✅ WebRTC 连接测试通过<br>
+                        SDP Offer 长度: ${offer.length} 字符
+                    </div>
+                `;
+                
+                connection.close();
+            } catch (error) {
+                log(`WebRTC 测试失败: ${error.message}`, 'error');
+                resultsElement.innerHTML = `
+                    <div class="test-result error">
+                        ❌ WebRTC 测试失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // 本地网络信息
+        window.testLocalNetwork = async () => {
+            log('获取本地网络信息...');
+            const resultsElement = document.getElementById('webrtc-results');
+            
+            try {
+                const networkInfo = await ConnectionUtils.getLocalNetworkInfo();
+                log(`本地 IP: ${networkInfo.localIP || '无法获取'}`, 'info');
+                
+                const deviceFingerprint = await ConnectionUtils.generateDeviceFingerprint();
+                log(`设备指纹: ${deviceFingerprint.id}`, 'info');
+                
+                resultsElement.innerHTML += `
+                    <div class="test-result success">
+                        ✅ 网络信息获取成功<br>
+                        本地 IP: ${networkInfo.localIP || '无法获取'}<br>
+                        设备 ID: ${deviceFingerprint.id}
+                    </div>
+                `;
+            } catch (error) {
+                log(`获取网络信息失败: ${error.message}`, 'error');
+                resultsElement.innerHTML += `
+                    <div class="test-result error">
+                        ❌ 网络信息获取失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // 加密功能测试
+        window.testCrypto = async () => {
+            log('测试加密功能...');
+            const resultsElement = document.getElementById('crypto-results');
+            
+            try {
+                const crypto = new LanBeamCrypto();
+                
+                // 测试 SHA-256
+                const testData = new TextEncoder().encode('Hello, LanBeam!');
+                const hash = await crypto.calculateSHA256(testData);
+                log(`SHA-256 哈希: ${hash}`, 'info');
+                
+                // 测试 CRC32
+                const crc = await crypto.calculateCRC32(testData);
+                log(`CRC32 校验和: ${crc}`, 'info');
+                
+                // 测试随机数生成
+                const randomKey = crypto.generateSessionKey(32);
+                log(`生成随机密钥: ${crypto.bytesToHex(randomKey)}`, 'info');
+                
+                resultsElement.innerHTML = `
+                    <div class="test-result success">
+                        ✅ 加密功能测试通过<br>
+                        SHA-256: ${hash.substring(0, 16)}...<br>
+                        CRC32: ${crc}<br>
+                        随机密钥长度: ${randomKey.length} 字节
+                    </div>
+                `;
+                
+                log('加密功能测试通过', 'success');
+            } catch (error) {
+                log(`加密测试失败: ${error.message}`, 'error');
+                resultsElement.innerHTML = `
+                    <div class="test-result error">
+                        ❌ 加密测试失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // QR 码测试
+        window.testQRGeneration = async () => {
+            log('测试 QR 码生成...');
+            const resultsElement = document.getElementById('qr-results');
+            
+            try {
+                const adapter = new QRManualAdapter({ debug: true });
+                const testSdp = 'v=0\no=- 123456 2 IN IP4 127.0.0.1\ns=-\nt=0 0\na=group:BUNDLE 0\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel';
+                
+                const qrResult = await adapter.generateOfferQR(testSdp);
+                log('QR 码生成成功', 'success');
+                
+                resultsElement.innerHTML = `
+                    <div class="test-result success">
+                        ✅ QR 码生成测试通过<br>
+                        数据长度: ${qrResult.rawData.length} 字符<br>
+                        <img src="${qrResult.dataURL}" alt="测试 QR 码" style="max-width: 200px; margin-top: 10px;">
+                    </div>
+                `;
+            } catch (error) {
+                log(`QR 码生成失败: ${error.message}`, 'error');
+                resultsElement.innerHTML = `
+                    <div class="test-result error">
+                        ❌ QR 码生成失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // 摄像头测试
+        window.testCameraAccess = async () => {
+            log('测试摄像头访问...');
+            const resultsElement = document.getElementById('qr-results');
+            
+            try {
+                const hasCamera = await QRUtils.isCameraSupported();
+                log(`摄像头支持: ${hasCamera}`, hasCamera ? 'success' : 'warning');
+                
+                if (hasCamera) {
+                    const permission = await QRUtils.requestCameraPermission();
+                    log(`摄像头权限: ${permission}`, permission ? 'success' : 'warning');
+                    
+                    resultsElement.innerHTML += `
+                        <div class="test-result ${permission ? 'success' : 'warning'}">
+                            ${permission ? '✅' : '⚠️'} 摄像头访问${permission ? '成功' : '被拒绝'}
+                        </div>
+                    `;
+                } else {
+                    resultsElement.innerHTML += `
+                        <div class="test-result warning">
+                            ⚠️ 未检测到摄像头设备
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                log(`摄像头测试失败: ${error.message}`, 'error');
+                resultsElement.innerHTML += `
+                    <div class="test-result error">
+                        ❌ 摄像头测试失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // 文件处理测试
+        window.testFileProcessing = async () => {
+            log('测试文件处理...');
+            const resultsElement = document.getElementById('file-results');
+            const fileInput = document.getElementById('test-file');
+            
+            if (fileInput.files.length === 0) {
+                resultsElement.innerHTML = `
+                    <div class="test-result warning">
+                        ⚠️ 请先选择文件
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const files = Array.from(fileInput.files);
+                log(`选择了 ${files.length} 个文件`, 'info');
+                
+                const crypto = new LanBeamCrypto();
+                let totalSize = 0;
+                
+                for (const file of files) {
+                    totalSize += file.size;
+                    const hash = await crypto.calculateSHA256(file);
+                    const icon = TransferUtils.getFileIcon(file.name, file.type);
+                    
+                    log(`文件: ${file.name}, 大小: ${TransferUtils.formatFileSize(file.size)}, 哈希: ${hash.substring(0, 16)}...`, 'info');
+                }
+                
+                resultsElement.innerHTML = `
+                    <div class="test-result success">
+                        ✅ 文件处理测试通过<br>
+                        文件数量: ${files.length}<br>
+                        总大小: ${TransferUtils.formatFileSize(totalSize)}<br>
+                        详情请查看调试日志
+                    </div>
+                `;
+                
+                log('文件处理测试完成', 'success');
+            } catch (error) {
+                log(`文件处理失败: ${error.message}`, 'error');
+                resultsElement.innerHTML = `
+                    <div class="test-result error">
+                        ❌ 文件处理失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // 性能测试
+        window.testPerformance = async () => {
+            log('开始性能测试...');
+            const resultsElement = document.getElementById('performance-results');
+            
+            try {
+                // 测试加密性能
+                const startTime = performance.now();
+                const crypto = new LanBeamCrypto();
+                
+                const testData = new Uint8Array(1024 * 1024); // 1MB 测试数据
+                crypto.getRandomValues(testData);
+                
+                const hashStart = performance.now();
+                const hash = await crypto.calculateSHA256(testData);
+                const hashTime = performance.now() - hashStart;
+                
+                const crcStart = performance.now();
+                const crc = await crypto.calculateCRC32(testData);
+                const crcTime = performance.now() - crcStart;
+                
+                const totalTime = performance.now() - startTime;
+                
+                // 计算吞吐量
+                const hashThroughput = (testData.length / hashTime * 1000) / (1024 * 1024); // MB/s
+                const crcThroughput = (testData.length / crcTime * 1000) / (1024 * 1024); // MB/s
+                
+                log(`SHA-256 性能: ${hashTime.toFixed(2)}ms, ${hashThroughput.toFixed(2)} MB/s`, 'info');
+                log(`CRC32 性能: ${crcTime.toFixed(2)}ms, ${crcThroughput.toFixed(2)} MB/s`, 'info');
+                
+                resultsElement.innerHTML = `
+                    <div class="test-result success">
+                        ✅ 性能测试完成 (1MB 数据)<br>
+                        SHA-256: ${hashTime.toFixed(2)}ms (${hashThroughput.toFixed(2)} MB/s)<br>
+                        CRC32: ${crcTime.toFixed(2)}ms (${crcThroughput.toFixed(2)} MB/s)<br>
+                        总耗时: ${totalTime.toFixed(2)}ms
+                    </div>
+                `;
+                
+                log('性能测试完成', 'success');
+            } catch (error) {
+                log(`性能测试失败: ${error.message}`, 'error');
+                resultsElement.innerHTML = `
+                    <div class="test-result error">
+                        ❌ 性能测试失败: ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // 页面加载完成后自动运行兼容性测试
+        document.addEventListener('DOMContentLoaded', () => {
+            log('测试页面已加载');
+            setTimeout(() => {
+                testBrowserSupport();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

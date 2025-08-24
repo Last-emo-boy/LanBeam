@@ -1,0 +1,28 @@
+Hello, LanBeam!
+
+This is a test file for verifying P2P file transfer functionality.
+
+File Information:
+- File Name: demo.txt  
+- Size: Less than 1KB
+- Content: Plain text
+- Purpose: Function testing
+
+Transfer Test Steps:
+1. Open LanBeam on Device A, select "Send Files"
+2. Select this test file
+3. Generate QR code
+4. Scan QR code on Device B or manually input connection info
+5. Wait for connection establishment and start transfer
+6. Verify received file content is complete
+
+Expected Results:
+- Connection established successfully
+- File transfer completed
+- File content matches exactly
+- Fast transfer speed (should be quick within LAN)
+
+If test succeeds, LanBeam basic functionality is working properly!
+
+---
+LanBeam - Making file transfer easier 🚀

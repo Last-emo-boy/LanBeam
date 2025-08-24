@@ -1,0 +1,49 @@
+{
+  "name": "lanbeam",
+  "version": "0.1.0",
+  "description": "局域网极速文件传输工具 - 基于 WebRTC 的纯前端 P2P 文件共享",
+  "main": "docs/index.html",
+  "scripts": {
+    "dev": "python -m http.server 8080 --directory docs",
+    "dev:https": "python -m https.server 8443 --directory docs --certfile cert.pem --keyfile key.pem",
+    "build": "echo 'No build step required for static site'",
+    "deploy": "gh-pages -d docs",
+    "test": "echo 'Tests not implemented yet'",
+    "lint": "echo 'Linting not configured yet'",
+    "start": "npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/LanBeam.git"
+  },
+  "keywords": [
+    "webrtc",
+    "file-transfer", 
+    "p2p",
+    "lan",
+    "pwa",
+    "offline",
+    "qr-code",
+    "no-server"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-username/LanBeam/issues"
+  },
+  "homepage": "https://your-username.github.io/LanBeam/",
+  "devDependencies": {
+    "gh-pages": "^6.0.0",
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": [
+    "Chrome >= 88",
+    "Firefox >= 90", 
+    "Safari >= 15",
+    "Edge >= 88"
+  ]
+}
