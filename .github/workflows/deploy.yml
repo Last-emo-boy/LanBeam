@@ -53,7 +53,7 @@ jobs:
           
           # Initialize git in deployment directory
           cd /tmp/deploy
-          git init
+          git init -b main
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           
