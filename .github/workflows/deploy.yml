@@ -31,6 +31,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify docs directory
+        run: |
+          echo "Contents of docs directory:"
+          ls -la docs/
+          echo "Checking index.html exists:"
+          test -f docs/index.html && echo "✅ index.html found" || echo "❌ index.html missing"
+
       - name: Configure Git
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -38,22 +45,26 @@ jobs:
 
       - name: Deploy to gh-pages branch
         run: |
-          # Clone the repository to a temporary directory
-          git clone --depth 1 --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git /tmp/gh-pages || git clone --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git /tmp/gh-pages
+          # Create a clean deployment directory
+          mkdir -p /tmp/deploy
           
-          # If gh-pages branch doesn't exist, create it
-          cd /tmp/gh-pages
-          if [ ! -f index.html ]; then
-            git checkout --orphan gh-pages
-            git rm -rf . 2>/dev/null || true
-          fi
+          # Copy all docs content to deployment directory
+          cp -r docs/* /tmp/deploy/
           
-          # Copy docs content
-          cp -r ${{ github.workspace }}/docs/* .
+          # Initialize git in deployment directory
+          cd /tmp/deploy
+          git init
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # Add, commit and push
+          # Add remote and create gh-pages branch
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # Add all files and commit
           git add .
-          git commit -m "Deploy from GitHub Actions - $(date)" || echo "No changes to commit"
-          git push origin gh-pages
+          git commit -m "Deploy to GitHub Pages - $(date)"
+          
+          # Force push to gh-pages branch
+          git push -f origin main:gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
