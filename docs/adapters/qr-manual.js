@@ -14,6 +14,7 @@ export class QRManualAdapter extends EventTarget {
       compression: options.compression !== false,
       maxQRLength: options.maxQRLength || 2000, // 二维码最大长度
       debug: options.debug || false,
+      qrSupported: options.qrSupported !== false && options.qrSupported !== undefined, // 默认假设支持，除非明确设置为false
       ...options
     };
     
@@ -22,7 +23,7 @@ export class QRManualAdapter extends EventTarget {
     this.currentAnswer = null;
     
     this._setupEventHandlers();
-    this._log('QR Manual Adapter initialized');
+    this._log('QR Manual Adapter initialized (QR支持: ' + this.options.qrSupported + ')');
   }
   
   /**
@@ -185,7 +186,9 @@ export class QRManualAdapter extends EventTarget {
         this._log('QR scanner started');
         this.emit('scanningStarted');
       } else {
-        throw new Error('QR Scanner library not loaded');
+        console.warn('QR Scanner library not available - camera scanning disabled');
+        this.emit('scanError', { message: 'QR Scanner library not loaded - please use manual input' });
+        // Don't throw error, just disable scanning functionality
       }
       
     } catch (error) {
@@ -306,7 +309,23 @@ export class QRManualAdapter extends EventTarget {
   async _generateQRCode(data) {
     return new Promise((resolve, reject) => {
       if (typeof QRCode === 'undefined') {
-        reject(new Error('QRCode library not loaded'));
+        // 如果QR库不可用，返回一个占位符或文本表示
+        console.warn('QRCode library not available, using text fallback');
+        const canvas = document.createElement('canvas');
+        canvas.width = this.options.qrCodeSize;
+        canvas.height = this.options.qrCodeSize;
+        const ctx = canvas.getContext('2d');
+        
+        // 绘制简单的文本替代
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#333';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('QR 库未加载', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillText('请使用手动输入', canvas.width / 2, canvas.height / 2 + 10);
+        
+        resolve(canvas.toDataURL());
         return;
       }
       
