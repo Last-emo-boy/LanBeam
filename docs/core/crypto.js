@@ -426,8 +426,30 @@ export const CryptoUtils = {
    * 检测 Web Crypto API 支持
    */
   isSupported() {
-    return typeof crypto !== 'undefined' && 
-           typeof crypto.subtle !== 'undefined';
+    // 检查基本的 crypto 对象
+    if (typeof crypto === 'undefined') {
+      console.warn('crypto 对象不存在');
+      return false;
+    }
+    
+    // 检查 subtle 属性
+    if (typeof crypto.subtle === 'undefined') {
+      console.warn('crypto.subtle 不存在 - 可能需要 HTTPS');
+      return false;
+    }
+    
+    // 检查协议 - Web Crypto API 在 HTTP 下不可用（除了 localhost）
+    const isSecureContext = window.isSecureContext || 
+                           location.protocol === 'https:' || 
+                           location.hostname === 'localhost' ||
+                           location.hostname === '127.0.0.1';
+    
+    if (!isSecureContext) {
+      console.warn('Web Crypto API 需要安全上下文 (HTTPS)');
+      return false;
+    }
+    
+    return true;
   },
   
   /**

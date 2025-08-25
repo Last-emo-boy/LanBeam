@@ -1092,3 +1092,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log('🚀 LanBeam application loaded');
+
+// 导出 LanBeamApp 类
+export { LanBeamApp };
