@@ -14,7 +14,7 @@ export class QRManualAdapter extends EventTarget {
       compression: options.compression !== false,
       maxQRLength: options.maxQRLength || 2000, // 二维码最大长度
       debug: options.debug || false,
-      qrSupported: options.qrSupported !== false, // 默认假设支持，除非明确设置为false
+      qrSupported: options.qrSupported !== false && options.qrSupported !== undefined, // 默认假设支持，除非明确设置为false
       ...options
     };
     

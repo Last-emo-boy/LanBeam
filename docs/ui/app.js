@@ -274,7 +274,7 @@ class LanBeamApp {
     this.qrAdapter = new QRManualAdapter({
       debug: this.config.debug,
       qrCodeSize: this.config.qrCodeSize,
-      qrSupported: qrSupported
+      qrSupported: !!qrSupported // Ensure boolean value
     });
     
     this._setupQRAdapterEvents();
