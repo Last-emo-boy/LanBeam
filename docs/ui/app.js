@@ -21,6 +21,7 @@ class LanBeamApp {
     this.currentFiles = [];
     this.isTransferring = false;
     this.deviceInfo = null;
+    this.initialized = false;
     
     // UI 元素引用
     this.elements = {};
@@ -33,8 +34,18 @@ class LanBeamApp {
       connectionTimeout: 30000,
       qrCodeSize: 256
     };
+  }
+  
+  /**
+   * 初始化应用程序 - 公共方法
+   */
+  async init() {
+    if (this.initialized) {
+      console.log('⚠️ App already initialized, skipping...');
+      return;
+    }
     
-    this._initializeApp();
+    await this._initializeApp();
   }
   
   /**
@@ -62,12 +73,14 @@ class LanBeamApp {
       // 显示主界面
       this._showModeSelection();
       
+      this.initialized = true;
       console.log('✅ LanBeam initialized successfully');
       this._showToast('success', 'LanBeam 已准备就绪！');
       
     } catch (error) {
       console.error('❌ Failed to initialize LanBeam:', error);
       this._showToast('error', `初始化失败: ${error.message}`);
+      throw error; // Re-throw to prevent multiple initialization attempts
     }
   }
   
@@ -92,7 +105,7 @@ class LanBeamApp {
       issues.push('File API 不受支持');
     }
     
-    // QR 码支持 - 增加重试逻辑
+    // QR 码支持 - 增加重试逻辑，但不作为必须条件
     console.log('检测 QR 库支持...');
     let qrSupported = QRUtils.isQRSupported();
     if (!qrSupported) {
@@ -108,14 +121,19 @@ class LanBeamApp {
       console.warn('- QrScanner类型:', typeof QrScanner);
       console.warn('- window.QRCode类型:', typeof window.QRCode);
       console.warn('- window.QrScanner类型:', typeof window.QrScanner);
-      issues.push('二维码库未加载');
+      console.warn('⚠️ QR 库未加载，将禁用二维码功能');
+      // 不再将QR库作为必须条件，允许应用在没有QR功能的情况下运行
     }
     
+    // 只有关键功能缺失时才抛出错误
     if (issues.length > 0) {
       throw new Error(`浏览器不兼容: ${issues.join(', ')}`);
     }
     
     console.log('✅ Browser compatibility check passed');
+    if (!qrSupported) {
+      console.log('⚠️ QR functionality disabled - manual input only');
+    }
   }
   
   /**
@@ -168,7 +186,12 @@ class LanBeamApp {
     // 文件选择
     if (this.elements.selectFiles) {
       this.elements.selectFiles.addEventListener('click', () => {
-        this.elements.fileInput.click();
+        const fileInput = this.elements.fileInput || document.getElementById('file-input');
+        if (fileInput) {
+          fileInput.click();
+        } else {
+          console.error('File input element not found');
+        }
       });
     }
     
@@ -244,13 +267,21 @@ class LanBeamApp {
    * 初始化核心组件
    */
   async _initializeComponents() {
-    // 初始化 QR 适配器
+    // 检查QR库是否可用
+    const qrSupported = QRUtils.isQRSupported();
+    
+    // 初始化 QR 适配器（即使QR库不可用也要初始化，以支持手动输入）
     this.qrAdapter = new QRManualAdapter({
       debug: this.config.debug,
-      qrCodeSize: this.config.qrCodeSize
+      qrCodeSize: this.config.qrCodeSize,
+      qrSupported: qrSupported
     });
     
     this._setupQRAdapterEvents();
+    
+    if (!qrSupported) {
+      console.warn('⚠️ QR functionality disabled - using fallback mode');
+    }
     
     console.log('✅ Components initialized');
   }
@@ -310,9 +341,9 @@ class LanBeamApp {
     this._hideAllSections();
     
     if (mode === 'send') {
-      this.elements.sendMode?.classList.remove('hidden');
+      this.elements['send-mode']?.classList.remove('hidden');
     } else if (mode === 'receive') {
-      this.elements.receiveMode?.classList.remove('hidden');
+      this.elements['receive-mode']?.classList.remove('hidden');
       this._startQRScanning();
     }
   }
@@ -324,7 +355,7 @@ class LanBeamApp {
     console.log('🏠 Showing mode selection');
     this.currentMode = null;
     this._hideAllSections();
-    this.elements.modeSelection?.classList.remove('hidden');
+    this.elements['mode-selection']?.classList.remove('hidden');
     
     // 清理资源
     this._cleanup();

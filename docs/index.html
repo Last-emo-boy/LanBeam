@@ -302,10 +302,19 @@
             try {
                 const { LanBeamApp } = await import('./ui/app.js');
                 const app = new LanBeamApp();
+                window.app = app; // Make app globally available for debugging
                 await app.init();
             } catch (error) {
                 console.error('应用初始化失败:', error);
-                document.getElementById('status').textContent = '初始化失败: ' + error.message;
+                // Try to find status element, create one if it doesn't exist
+                let statusElement = document.getElementById('status');
+                if (!statusElement) {
+                    statusElement = document.createElement('div');
+                    statusElement.id = 'status';
+                    statusElement.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff4444; color: white; padding: 20px; border-radius: 8px; z-index: 9999;';
+                    document.body.appendChild(statusElement);
+                }
+                statusElement.textContent = '初始化失败: ' + error.message;
             }
         });
     </script>

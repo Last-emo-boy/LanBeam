@@ -484,7 +484,9 @@ export const CryptoUtils = {
     
     const crypto = new LanBeamCrypto();
     const dataString = JSON.stringify(data);
-    const hash = await crypto.calculateSHA256(crypto.encoder.encode(dataString));
+    const encodedData = crypto.encoder.encode(dataString);
+    // Pass the buffer from the Uint8Array to calculateSHA256
+    const hash = await crypto.calculateSHA256(encodedData.buffer);
     
     return hash.substring(0, 16); // 返回前16个字符
   },
