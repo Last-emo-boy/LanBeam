@@ -92,8 +92,22 @@ class LanBeamApp {
       issues.push('File API 不受支持');
     }
     
-    // QR 码支持
-    if (!QRUtils.isQRSupported()) {
+    // QR 码支持 - 增加重试逻辑
+    console.log('检测 QR 库支持...');
+    let qrSupported = QRUtils.isQRSupported();
+    if (!qrSupported) {
+      // 等待库加载完成后再检测
+      console.log('QR 库未就绪，等待加载...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      qrSupported = QRUtils.isQRSupported();
+    }
+    
+    if (!qrSupported) {
+      console.warn('QR库详细状态:');
+      console.warn('- QRCode类型:', typeof QRCode);
+      console.warn('- QrScanner类型:', typeof QrScanner);
+      console.warn('- window.QRCode类型:', typeof window.QRCode);
+      console.warn('- window.QrScanner类型:', typeof window.QrScanner);
       issues.push('二维码库未加载');
     }
     

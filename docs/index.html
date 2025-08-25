@@ -283,15 +283,32 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
     
     <!-- Core Scripts -->
-    <script type="module" src="core/connection.js"></script>
-    <script type="module" src="core/transfer.js"></script>
-    <script type="module" src="core/crypto.js"></script>
-    <script type="module" src="adapters/qr-manual.js"></script>
-    <script type="module" src="ui/app.js"></script>
+    <script type="module">
+        // 延迟初始化确保库已加载
+        window.addEventListener('load', async () => {
+            // 等待一小段时间确保所有脚本都已执行
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            console.log('检查依赖库状态:');
+            console.log('QRCode:', typeof QRCode !== 'undefined');
+            console.log('QrScanner:', typeof QrScanner !== 'undefined');
+            console.log('Web Crypto API:', 'crypto' in window && 'subtle' in window.crypto);
+            
+            // 动态导入并初始化应用
+            try {
+                const { LanBeamApp } = await import('./ui/app.js');
+                const app = new LanBeamApp();
+                await app.init();
+            } catch (error) {
+                console.error('应用初始化失败:', error);
+                document.getElementById('status').textContent = '初始化失败: ' + error.message;
+            }
+        });
+    </script>
     
     <!-- PWA Registration -->
     <script>

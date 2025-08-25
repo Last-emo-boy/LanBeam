@@ -516,7 +516,21 @@ export const QRUtils = {
    * 检测二维码库支持
    */
   isQRSupported() {
-    return typeof QRCode !== 'undefined' && typeof QrScanner !== 'undefined';
+    // 多种方式检测 QRCode 库
+    const hasQRCode = (typeof QRCode !== 'undefined') || 
+                      (typeof window.QRCode !== 'undefined') ||
+                      (window.QRCode && typeof window.QRCode === 'function');
+    
+    // 多种方式检测 QrScanner 库
+    const hasQrScanner = (typeof QrScanner !== 'undefined') || 
+                         (typeof window.QrScanner !== 'undefined') ||
+                         (window.QrScanner && typeof window.QrScanner === 'function');
+    
+    console.log('QR 库检测结果:');
+    console.log('- QRCode 可用:', hasQRCode);
+    console.log('- QrScanner 可用:', hasQrScanner);
+    
+    return hasQRCode && hasQrScanner;
   },
   
   /**
